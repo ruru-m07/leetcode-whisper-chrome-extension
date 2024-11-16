@@ -1,4 +1,6 @@
+import { z } from 'zod'
 import { ModalInterface } from '../interface/ModalInterface'
+import { outputSchema } from '@/schema/modeOutput'
 
 /**
  * This class is the base class for all modals.
@@ -18,7 +20,7 @@ export abstract class BaseModal extends ModalInterface {
     systemPrompt: string
   ): Promise<{
     error: Error | null
-    success: string | null
+    success: z.infer<typeof outputSchema> | null
   }>
 
   async generateResponse(
@@ -26,7 +28,7 @@ export abstract class BaseModal extends ModalInterface {
     systemPrompt: string
   ): Promise<{
     error: Error | null
-    success: string | null
+    success: z.infer<typeof outputSchema> | null
   }> {
     return this.makeApiCall(prompt, systemPrompt)
   }

@@ -1,6 +1,8 @@
+import { z } from 'zod'
 import { ValidModal } from '@/constants/valid_modals'
 import { modals } from '@/modals'
 import { ModalInterface } from '@/interface/ModalInterface'
+import { outputSchema } from '@/schema/modeOutput'
 
 export class ModalService {
   private activeModal: ModalInterface | null = null
@@ -20,7 +22,7 @@ export class ModalService {
   ): Promise<
     Promise<{
       error: Error | null
-      success: string | null
+      success: z.infer<typeof outputSchema> | null
     }>
   > {
     if (!this.activeModal) {

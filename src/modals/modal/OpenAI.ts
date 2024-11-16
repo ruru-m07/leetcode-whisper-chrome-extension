@@ -1,3 +1,5 @@
+import { z } from 'zod'
+import { outputSchema } from '@/schema/modeOutput'
 import { ModalInterface } from '../../interface/ModalInterface'
 
 export class OpenAI implements ModalInterface {
@@ -10,12 +12,12 @@ export class OpenAI implements ModalInterface {
 
   async generateResponse(prompt: string): Promise<{
     error: Error | null
-    success: string | null
+    success: z.infer<typeof outputSchema> | null
   }> {
     // TODO : Implement the logic to generate response from OpenAI
     return {
       error: null,
-      success: 'Response from OpenAI',
+      success: null,
     }
   }
 }

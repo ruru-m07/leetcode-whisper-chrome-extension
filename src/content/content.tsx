@@ -151,8 +151,27 @@ function ChatBox({ context, visible }: ChatBoxProps) {
 
     modalService.selectModal(modal, apiKey)
 
+    let programmingLanguage = 'UNKNOWN'
+
+    // if (changeLanguageButton) {
+    //   if (changeLanguageButton.textContent)
+    //     programmingLanguage = changeLanguageButton.textContent
+    // }
+    const userCurrentCodeContainer = document.querySelectorAll('.view-line')
+
+    const extractedCode = extractCode(userCurrentCodeContainer)
+
+    const systemPromptModified = SYSTEM_PROMPT.replace(
+      '{{problem_statement}}',
+      context.problemStatement
+    )
+      .replace('{{programming_language}}', programmingLanguage)
+      .replace('{{user_code}}', extractedCode)
+
+    console.log('context.problemStatement:::', systemPromptModified)
+
     await modalService
-      .generate('Hello, what is your name?', context.problemStatement)
+      .generate('Hello!', systemPromptModified)
       .then((response) => {
         console.log('response::: :3', response)
       })

@@ -1,3 +1,6 @@
+import { outputSchema } from "@/schema/modeOutput"
+import { z } from "zod"
+
 /**
  * This interface defines the structure of a modal.
  * It has a name property and two methods.
@@ -13,6 +16,6 @@ export abstract class ModalInterface {
     systemPrompt: string
   ): Promise<{
     error: Error | null
-    success: string | null
+    success: z.infer<typeof outputSchema> | null
   }>
 }

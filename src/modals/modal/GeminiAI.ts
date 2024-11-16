@@ -1,6 +1,8 @@
-import { generateText } from 'ai'
+import { generateObject } from 'ai'
 import { ModalInterface } from '../../interface/ModalInterface'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { z } from 'zod'
+import { outputSchema } from '@/schema/modeOutput'
 
 export class GeminiAI implements ModalInterface {
   name = 'geminiai'
@@ -15,29 +17,24 @@ export class GeminiAI implements ModalInterface {
     systemPrompt: string
   ): Promise<{
     error: Error | null
-    success: string | null
+    success: z.infer<typeof outputSchema> | null
   }> {
     try {
       const google = createGoogleGenerativeAI({
         apiKey: this.apiKey,
       })
 
-      const { text } = await generateText({
-        model: google('gemini-1.5-pro-latest', {
-          safetySettings: [
-            {
-              category: 'HARM_CATEGORY_HARASSMENT',
-              threshold: 'BLOCK_LOW_AND_ABOVE',
-            },
-          ],
-        }),
-        prompt: prompt,
+      const data = await generateObject({
+        model: google('gemini-1.5-pro-latest'),
+        prompt,
+        schema: outputSchema,
+        output: 'object',
         system: systemPrompt,
       })
 
-      return { error: null, success: text }
+      return { error: null, success: data.object }
     } catch (error: any) {
-      return { error: error, success: null }
+      return { error, success: null }
     }
   }
 }

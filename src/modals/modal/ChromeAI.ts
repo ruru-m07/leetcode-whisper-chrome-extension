@@ -1,6 +1,8 @@
+import { outputSchema } from '@/schema/modeOutput'
 import { ModalInterface } from '../../interface/ModalInterface'
 import { generateText } from 'ai'
 import { chromeai } from 'chrome-ai'
+import { z } from 'zod'
 
 export class ChromeAI implements ModalInterface {
   name = 'ChromeAI'
@@ -16,7 +18,7 @@ export class ChromeAI implements ModalInterface {
 
   async generateResponse(prompt: string): Promise<{
     error: Error | null
-    success: string | null
+    success: z.infer<typeof outputSchema> | null
   }> {
     const { text } = await generateText({
       model: chromeai(),
@@ -26,7 +28,7 @@ export class ChromeAI implements ModalInterface {
     // TODO : Implement the logic to generate response from ChromeAI
     return {
       error: null,
-      success: text,
+      success: null,
     }
   }
 }

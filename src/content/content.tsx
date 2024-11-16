@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Bot, ClipboardCopy, Send } from 'lucide-react'
+import { Bot, Send } from 'lucide-react'
 
 import './style.css'
 import { Input } from '@/components/ui/input'
@@ -69,11 +69,6 @@ function ChatBox({ context, visible }: ChatBoxProps) {
       .replace('{{programming_language}}', programmingLanguage)
       .replace('{{user_code}}', extractedCode)
 
-    console.log({
-      prompt: `User Prompt: ${value}\nCode: ${extractedCode}`,
-      systemPrompt: systemPromptModified,
-    })
-
     const { error, success } = await modalService.generate(
       `User Prompt: ${prompt}\nCode: ${extractedCode}`,
       systemPromptModified
@@ -126,18 +121,19 @@ function ChatBox({ context, visible }: ChatBoxProps) {
 
                 {!(typeof message.content === 'string') && (
                   <Accordion type="multiple">
-                    {message.content?.hints && message.content.hints.length > 0 && (
-                      <AccordionItem value="item-1">
-                        <AccordionTrigger>Hints 👀</AccordionTrigger>
-                        <AccordionContent>
-                          <ul className="space-y-4">
-                            {message.content?.hints?.map((e) => (
-                              <li key={e}>{e}</li>
-                            ))}
-                          </ul>
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
+                    {message.content?.hints &&
+                      message.content.hints.length > 0 && (
+                        <AccordionItem value="item-1">
+                          <AccordionTrigger>Hints 👀</AccordionTrigger>
+                          <AccordionContent>
+                            <ul className="space-y-4">
+                              {message.content?.hints?.map((e) => (
+                                <li key={e}>{e}</li>
+                              ))}
+                            </ul>
+                          </AccordionContent>
+                        </AccordionItem>
+                      )}
                     {message.content?.snippet && (
                       <AccordionItem value="item-2">
                         <AccordionTrigger>Code 🧑🏻‍💻</AccordionTrigger>
@@ -146,18 +142,6 @@ function ChatBox({ context, visible }: ChatBoxProps) {
                           <pre className="bg-black p-3 rounded-md shadow-lg ">
                             <code>{message.content.snippet}</code>
                           </pre>
-                          {/* <Button
-                            className="p-0 mt-2"
-                            size="small"
-                            variant="tertiary"
-                            onClick={() =>
-                              navigator.clipboard.writeText(
-                                `${message.content?.snippet}`
-                              )
-                            }
-                          >
-                            <ClipboardCopy />
-                          </Button> */}
                         </AccordionContent>
                       </AccordionItem>
                     )}

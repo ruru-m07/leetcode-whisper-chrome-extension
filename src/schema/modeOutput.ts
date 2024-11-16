@@ -9,6 +9,7 @@ export const outputSchema = z.object({
     .describe('max 2 hints'),
   snippet: z
     .string()
+    .optional()
     .describe('code snippet should be in format.'),
   programmingLanguage: z.string().optional(),
 })

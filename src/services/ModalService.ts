@@ -3,6 +3,7 @@ import { ValidModal } from '@/constants/valid_modals'
 import { modals } from '@/modals'
 import { ModalInterface } from '@/interface/ModalInterface'
 import { outputSchema } from '@/schema/modeOutput'
+import { ProviderMetadata } from 'ai'
 
 export class ModalService {
   private activeModal: ModalInterface | null = null

@@ -1,13 +1,11 @@
 import React, { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Bot, ClipboardCopy, Send } from 'lucide-react'
-import OpenAI from 'openai'
 
 import './style.css'
 import { Input } from '@/components/ui/input'
 import { SYSTEM_PROMPT } from '@/constants/prompt'
 import { extractCode } from './util'
-import { ChatCompletionMessageParam } from 'openai/resources/index.mjs'
 
 import {
   Accordion,
@@ -21,13 +19,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 
 import { ModalService } from '@/services/ModalService'
 import { useChromeStorage } from '@/hooks/useChromeStorage'
-
-function createOpenAISDK(apiKey: string) {
-  return new OpenAI({
-    apiKey,
-    dangerouslyAllowBrowser: true,
-  })
-}
+import { ChatHistory } from '@/interface/chatHistory'
 
 interface ChatBoxProps {
   visible: boolean
@@ -36,107 +28,13 @@ interface ChatBoxProps {
   }
 }
 
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  message: string
-  type: 'text' | 'markdown'
-  assistantResponse?: {
-    feedback?: string
-    hints?: string[]
-    snippet?: string
-    programmingLanguage?: string
-  }
-}
-
 function ChatBox({ context, visible }: ChatBoxProps) {
   const [value, setValue] = React.useState('')
-  const [chatHistory, setChatHistory] = React.useState<ChatMessage[]>([])
+  const [chatHistory, setChatHistory] = React.useState<ChatHistory[]>([])
 
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
   const handleGenerateAIResponse = async () => {
-    const openAIAPIKey = (await chrome.storage.local.get('apiKey')) as {
-      apiKey?: string
-    }
-
-    if (!openAIAPIKey.apiKey) return alert('OpenAI API Key is required')
-
-    const openai = createOpenAISDK(openAIAPIKey.apiKey)
-
-    const userMessage = value
-    const userCurrentCodeContainer = document.querySelectorAll('.view-line')
-    const changeLanguageButton = document.querySelector(
-      'button.rounded.items-center.whitespace-nowrap.inline-flex.bg-transparent.dark\\:bg-dark-transparent.text-text-secondary.group'
-    )
-    let programmingLanguage = 'UNKNOWN'
-
-    if (changeLanguageButton) {
-      if (changeLanguageButton.textContent)
-        programmingLanguage = changeLanguageButton.textContent
-    }
-
-    const extractedCode = extractCode(userCurrentCodeContainer)
-
-    const systemPromptModified = SYSTEM_PROMPT.replace(
-      '{{problem_statement}}',
-      context.problemStatement
-    )
-      .replace('{{programming_language}}', programmingLanguage)
-      .replace('{{user_code}}', extractedCode)
-
-    const apiResponse = await openai.chat.completions.create({
-      model: 'chatgpt-4o-latest',
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: systemPromptModified },
-        ...chatHistory.map(
-          (chat) =>
-            ({
-              role: chat.role,
-              content: chat.message,
-            }) as ChatCompletionMessageParam
-        ),
-        {
-          role: 'user',
-          content: `User Prompt: ${userMessage}\n\nCode: ${extractedCode}`,
-        },
-      ],
-    })
-
-    if (apiResponse.choices[0].message.content) {
-      const result = JSON.parse(apiResponse.choices[0].message.content)
-
-      if ('output' in result) {
-        setChatHistory((prev) => [
-          ...prev,
-          {
-            message: 'NA',
-            role: 'assistant',
-            type: 'markdown',
-            assistantResponse: {
-              feedback: result.output.feedback,
-              hints: result.output.hints,
-              snippet: result.output.snippet,
-              programmingLanguage: result.output.programmingLanguage,
-            },
-          },
-        ])
-        chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
-      }
-    }
-  }
-
-  const onSendMessage = () => {
-    setChatHistory((prev) => [
-      ...prev,
-      { role: 'user', message: value, type: 'text' },
-    ])
-    chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
-    setValue('')
-    handleGenerateAIResponse()
-  }
-
-  const checks = async () => {
     const modalService = new ModalService()
 
     const { getApiKey, getModal } = useChromeStorage()
@@ -153,10 +51,13 @@ function ChatBox({ context, visible }: ChatBoxProps) {
 
     let programmingLanguage = 'UNKNOWN'
 
-    // if (changeLanguageButton) {
-    //   if (changeLanguageButton.textContent)
-    //     programmingLanguage = changeLanguageButton.textContent
-    // }
+    const changeLanguageButton = document.querySelector(
+      'button.rounded.items-center.whitespace-nowrap.inline-flex.bg-transparent.dark\\:bg-dark-transparent.text-text-secondary.group'
+    )
+    if (changeLanguageButton) {
+      if (changeLanguageButton.textContent)
+        programmingLanguage = changeLanguageButton.textContent
+    }
     const userCurrentCodeContainer = document.querySelectorAll('.view-line')
 
     const extractedCode = extractCode(userCurrentCodeContainer)
@@ -168,13 +69,36 @@ function ChatBox({ context, visible }: ChatBoxProps) {
       .replace('{{programming_language}}', programmingLanguage)
       .replace('{{user_code}}', extractedCode)
 
-    console.log('context.problemStatement:::', systemPromptModified)
+    console.log({
+      prompt: `User Prompt: ${value}\nCode: ${extractedCode}`,
+      systemPrompt: systemPromptModified,
+    })
 
-    await modalService
-      .generate('Hello!', systemPromptModified)
-      .then((response) => {
-        console.log('response::: :3', response)
-      })
+    const { error, success } = await modalService.generate(
+      `User Prompt: ${prompt}\nCode: ${extractedCode}`,
+      systemPromptModified
+    )
+
+    if (error) {
+      console.log('error:::', error)
+    }
+
+    if (success) {
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: success,
+        },
+      ])
+      chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  const onSendMessage = (value: string) => {
+    setChatHistory((prev) => [...prev, { role: 'user', content: value }])
+    chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
+    handleGenerateAIResponse()
   }
 
   if (!visible) return <></>
@@ -193,66 +117,64 @@ function ChatBox({ context, visible }: ChatBoxProps) {
                   : 'bg-muted'
               )}
             >
-              {message.role === 'user' && <>{message.message}</>}
-              {message.role === 'assistant' && (
-                <>
-                  <p>{message.assistantResponse?.feedback}</p>
+              <>
+                <p>
+                  {typeof message.content === 'string'
+                    ? message.content
+                    : message.content.feedback}
+                </p>
 
+                {!(typeof message.content === 'string') && (
                   <Accordion type="multiple">
-                    {message.assistantResponse?.hints && (
+                    {message.content?.hints && message.content.hints.length > 0 && (
                       <AccordionItem value="item-1">
                         <AccordionTrigger>Hints 👀</AccordionTrigger>
                         <AccordionContent>
                           <ul className="space-y-4">
-                            {message.assistantResponse?.hints?.map((e) => (
+                            {message.content?.hints?.map((e) => (
                               <li key={e}>{e}</li>
                             ))}
                           </ul>
                         </AccordionContent>
                       </AccordionItem>
                     )}
-                    {message.assistantResponse?.snippet && (
+                    {message.content?.snippet && (
                       <AccordionItem value="item-2">
                         <AccordionTrigger>Code 🧑🏻‍💻</AccordionTrigger>
 
                         <AccordionContent>
                           <pre className="bg-black p-3 rounded-md shadow-lg ">
-                            <code>{message.assistantResponse?.snippet}</code>
+                            <code>{message.content.snippet}</code>
                           </pre>
-                          <Button
+                          {/* <Button
                             className="p-0 mt-2"
                             size="small"
                             variant="tertiary"
                             onClick={() =>
                               navigator.clipboard.writeText(
-                                `${message.assistantResponse?.snippet}`
+                                `${message.content?.snippet}`
                               )
                             }
                           >
                             <ClipboardCopy />
-                          </Button>
+                          </Button> */}
                         </AccordionContent>
                       </AccordionItem>
                     )}
                   </Accordion>
-                </>
-              )}
+                )}
+              </>
             </div>
           ))}
           <div ref={chatBoxRef} />
         </div>
       </CardContent>
-      <div>
-        demos:::
-        <Button onClick={checks}>click to test</Button>
-      </div>
       <CardFooter>
         <form
           onSubmit={(event) => {
             event.preventDefault()
             if (value.length === 0) return
-            onSendMessage()
-            setValue('')
+            onSendMessage(value)
           }}
           className="flex w-full items-center space-x-2"
         >
@@ -263,6 +185,7 @@ function ChatBox({ context, visible }: ChatBoxProps) {
             autoComplete="off"
             value={value}
             onChange={(event) => setValue(event.target.value)}
+            required
           />
           <Button type="submit" size="icon" disabled={value.length === 0}>
             <Send className="h-4 w-4" />

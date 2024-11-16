@@ -1,4 +1,4 @@
-import { generateObject } from 'ai'
+import { generateObject, ProviderMetadata } from 'ai'
 import { ModalInterface } from '../../interface/ModalInterface'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { z } from 'zod'
@@ -32,7 +32,10 @@ export class GeminiAI implements ModalInterface {
         system: systemPrompt,
       })
 
-      return { error: null, success: data.object }
+      return {
+        error: null,
+        success: data.object,
+      }
     } catch (error: any) {
       return { error, success: null }
     }

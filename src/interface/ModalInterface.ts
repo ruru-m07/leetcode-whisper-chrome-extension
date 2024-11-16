@@ -1,4 +1,5 @@
 import { outputSchema } from "@/schema/modeOutput"
+import { ProviderMetadata } from "ai"
 import { z } from "zod"
 
 /**

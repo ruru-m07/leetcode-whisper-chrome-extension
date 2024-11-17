@@ -7,8 +7,8 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { generateObjectResponce } from '../utils'
 import { VALID_MODELS } from '@/constants/valid_modals'
 
-export class GeminiAI implements ModalInterface {
-  name = 'geminiai'
+export class GeminiAI_1_5_pro implements ModalInterface {
+  name = 'gemini_1.5_pro'
   private apiKey: string = ''
 
   init(apiKey: string) {

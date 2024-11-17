@@ -1,0 +1,28 @@
+name: Ci
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  pull_request:
+    branches: ['*']
+  push:
+    branches: ['main']
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
+        run: npm i
+
+      - name: Build Check
+        run: npm run build

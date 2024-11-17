@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { EyeClosedIcon, EyeOpenIcon } from '@radix-ui/react-icons'
 
 /**
  * Props for the Input component.
@@ -177,4 +178,57 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
 Input.displayName = 'Input'
 
-export { Input }
+const HideApiKey = React.forwardRef<
+  HTMLInputElement,
+  Omit<InputProps, 'label' | 'error'>
+>(({ className, ...props }, ref) => {
+  const [showPassword, setShowPassword] = React.useState(false)
+
+  return (
+    <div className="relative">
+      <Input
+        type={showPassword ? 'text' : 'password'}
+        iclassName="hide-password-toggle"
+        className={className}
+        ref={ref}
+        {...props}
+      />
+      <button
+        type="button"
+        className={
+          'absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
+        }
+        onClick={() => setShowPassword((prev) => !prev)}
+        disabled={props.disabled}
+      >
+        <div className='flex'>
+          <div className="bg-background w-4 h-4" />
+          {showPassword ? (
+            <EyeOpenIcon className="h-4 w-4 bg-background" aria-hidden="true" />
+          ) : (
+            <EyeClosedIcon
+              className="h-4 w-4 bg-background"
+              aria-hidden="true"
+            />
+          )}
+        </div>
+        <span className="sr-only">
+          {showPassword ? 'Hide password' : 'Show password'}
+        </span>
+      </button>
+
+      {/* hides browsers password toggles */}
+      <style>{`
+					.hide-password-toggle::-ms-reveal,
+					.hide-password-toggle::-ms-clear {
+						visibility: hidden;
+						pointer-events: none;
+						display: none;
+					}
+				`}</style>
+    </div>
+  )
+})
+HideApiKey.displayName = 'HideApiKey'
+
+export { Input, HideApiKey }

@@ -167,7 +167,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
               <SelectSeparator />
               {VALID_MODELS.map((modelOption) => (
                 <SelectItem key={modelOption.name} value={modelOption.name}>
-                  {modelOption.model}
+                  {modelOption.display}
                 </SelectItem>
               ))}
             </SelectGroup>
@@ -364,7 +364,7 @@ const ContentPage: React.FC = () => {
                                 key={modelOption.name}
                                 value={modelOption.name}
                               >
-                                {modelOption.model}
+                                {modelOption.display}
                               </SelectItem>
                             ))}
                           </SelectGroup>

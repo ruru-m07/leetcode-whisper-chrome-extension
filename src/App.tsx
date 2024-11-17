@@ -15,7 +15,7 @@ import {
   SelectTrigger,
 } from '@/components/ui/select'
 import { VALID_MODELS, type ValidModel } from './constants/valid_modals'
-import { Input } from '@/components/ui/input'
+import { HideApiKey } from '@/components/ui/input'
 import { useChromeStorage } from './hooks/useChromeStorage'
 
 const Popup: React.FC = () => {
@@ -59,10 +59,11 @@ const Popup: React.FC = () => {
     const loadChromeStorage = async () => {
       if (!chrome) return
 
-      const { selectModel } = useChromeStorage()
+      const { selectModel, getKeyModel } = useChromeStorage()
 
       setModel(await selectModel())
       setSelectedModel(await selectModel())
+      setApikey((await getKeyModel(await selectModel())).apiKey)
 
       setIsLoaded(true)
     }
@@ -70,15 +71,14 @@ const Popup: React.FC = () => {
     loadChromeStorage()
   }, [])
 
-  React.useEffect(() => {}, [model])
-
-  const heandelModel = (v: ValidModel) => {
+  const heandelModel = async (v: ValidModel) => {
     if (v) {
-      const { setSelectModel } = useChromeStorage()
+      const { setSelectModel, getKeyModel, selectModel } = useChromeStorage()
       setSelectModel(v)
       setModel(v)
       setSelectedModel(v)
-      setApikey('')
+      console.log('asdasadas', (await getKeyModel(await selectModel())).apiKey)
+      setApikey((await getKeyModel(await selectModel())).apiKey)
     }
   }
 
@@ -135,15 +135,14 @@ const Popup: React.FC = () => {
             </div>
             <div className="space-y-2">
               <label htmlFor="text" className="text-xs text-muted-foreground">
-                API Key
+                API Key {model ? `for ${model}` : ''}
               </label>
-              <Input
-                type="text"
-                required
-                disabled={!model}
+              <HideApiKey
                 value={apikey || ''}
                 onChange={(e) => setApikey(e.target.value)}
                 placeholder="Enter OpenAI API Key"
+                disabled={!model}
+                required
               />
             </div>
             <Button disabled={isloading} type="submit" className="w-full mt-2">

@@ -1,22 +1,45 @@
-import { outputSchema } from "@/schema/modeOutput"
-import { ProviderMetadata } from "ai"
-import { z } from "zod"
+import { outputSchema } from '@/schema/modeOutput';
+import { z } from 'zod';
+import { ChatHistoryParsed } from './chatHistory';
 
 /**
- * This interface defines the structure of a modal.
- * It has a name property and two methods.
- * The `init` method is used to initialize the modal with the API key.
- * The `generateResponse` method is used to generate a response from the modal.
- * It takes a prompt as an argument and returns a promise that resolves to a string.
+ * Defines the contract for AI modal implementations.
+ * 
+ * Each modal must have a unique `name` and provide methods for initialization 
+ * and response generation.
  */
 export abstract class ModalInterface {
-  abstract name: string
-  abstract init(apiKey?: string): void
+  /**
+   * The unique name of the modal.
+   */
+  abstract name: string;
+
+  /**
+   * Initializes the modal with the provided API key.
+   * 
+   * @param apiKey - The API key used to authenticate with the AI service.
+   */
+  abstract init(apiKey?: string): void;
+
+  /**
+   * Generates a response using the AI model.
+   * 
+   * @param prompt - The main prompt provided by the user.
+   * @param systemPrompt - A system-level instruction to guide the AI.
+   * @param messages - A parsed history of the chat for context.
+   * @param extractedCode - (Optional) A code snippet to assist the AI in its response.
+   * 
+   * @returns A promise resolving to an object containing either:
+   *  - `error`: Any error encountered during the API call.
+   *  - `success`: The successful response data adhering to `outputSchema`.
+   */
   abstract generateResponse(
     prompt: string,
-    systemPrompt: string
+    systemPrompt: string,
+    messages: ChatHistoryParsed[] | [],
+    extractedCode?: string
   ): Promise<{
-    error: Error | null
-    success: z.infer<typeof outputSchema> | null
-  }>
+    error: Error | null;
+    success: z.infer<typeof outputSchema> | null;
+  }>;
 }

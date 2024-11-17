@@ -2,7 +2,6 @@ import React, { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Bot, Send } from 'lucide-react'
 
-import './style.css'
 import { Input } from '@/components/ui/input'
 import { SYSTEM_PROMPT } from '@/constants/prompt'
 import { extractCode } from './util'
@@ -19,35 +18,51 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 
 import { ModalService } from '@/services/ModalService'
 import { useChromeStorage } from '@/hooks/useChromeStorage'
-import { ChatHistory } from '@/interface/chatHistory'
+import { ChatHistory, parseChatHistory } from '@/interface/chatHistory'
+import { ValidModel } from '@/constants/valid_modals'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 interface ChatBoxProps {
   visible: boolean
   context: {
     problemStatement: string
   }
+  model: ValidModel
+  apikey: string
 }
 
-function ChatBox({ context, visible }: ChatBoxProps) {
+const ChatBox: React.FC<ChatBoxProps> = ({
+  context,
+  visible,
+  model,
+  apikey,
+}) => {
   const [value, setValue] = React.useState('')
   const [chatHistory, setChatHistory] = React.useState<ChatHistory[]>([])
 
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
+  /**
+   * Handles the generation of an AI response.
+   *
+   * This function performs the following steps:
+   * 1. Initializes a new instance of `ModalService`.
+   * 2. Selects a modal using the provided model and API key.
+   * 3. Determines the programming language from the UI.
+   * 4. Extracts the user's current code from the document.
+   * 5. Modifies the system prompt with the problem statement, programming language, and extracted code.
+   * 6. Generates a response using the modified system prompt.
+   * 7. Updates the chat history with the generated response or error message.
+   * 8. Scrolls the chat box into view.
+   *
+   * @async
+   * @function handleGenerateAIResponse
+   * @returns {Promise<void>} A promise that resolves when the AI response generation is complete.
+   */
   const handleGenerateAIResponse = async () => {
     const modalService = new ModalService()
 
-    const { getApiKey, getModal } = useChromeStorage()
-    const modal = await getModal()
-    const apiKey = await getApiKey()
-
-    if (!modal || !apiKey) {
-      // TODO : will heandel this later
-      console.log("modal or api key doesn't exist")
-      return
-    }
-
-    modalService.selectModal(modal, apiKey)
+    modalService.selectModal(model, apikey)
 
     let programmingLanguage = 'UNKNOWN'
 
@@ -69,13 +84,24 @@ function ChatBox({ context, visible }: ChatBoxProps) {
       .replace('{{programming_language}}', programmingLanguage)
       .replace('{{user_code}}', extractedCode)
 
+    const PCH = parseChatHistory(chatHistory)
+
     const { error, success } = await modalService.generate(
-      `User Prompt: ${prompt}\nCode: ${extractedCode}`,
-      systemPromptModified
+      `${value}`,
+      systemPromptModified,
+      PCH,
+      extractedCode
     )
 
     if (error) {
-      console.log('error:::', error)
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: error.message,
+        },
+      ])
+      chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
     if (success) {
@@ -86,6 +112,7 @@ function ChatBox({ context, visible }: ChatBoxProps) {
           content: success,
         },
       ])
+      setValue('')
       chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }
@@ -101,19 +128,19 @@ function ChatBox({ context, visible }: ChatBoxProps) {
   return (
     <Card className="mb-5">
       <CardContent>
-        <div className="space-y-4 h-[400px] w-[500px] overflow-auto mt-5">
+        <ScrollArea className="space-y-4 h-[400px] w-[500px] mt-5 p-4">
           {chatHistory.map((message, index) => (
             <div
               key={index}
               className={cn(
-                'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm',
+                'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm my-2',
                 message.role === 'user'
                   ? 'ml-auto bg-primary text-primary-foreground'
                   : 'bg-muted'
               )}
             >
               <>
-                <p>
+                <p className="max-w-80">
                   {typeof message.content === 'string'
                     ? message.content
                     : message.content.feedback}
@@ -123,7 +150,7 @@ function ChatBox({ context, visible }: ChatBoxProps) {
                   <Accordion type="multiple">
                     {message.content?.hints &&
                       message.content.hints.length > 0 && (
-                        <AccordionItem value="item-1">
+                        <AccordionItem value="item-1" className="max-w-80">
                           <AccordionTrigger>Hints 👀</AccordionTrigger>
                           <AccordionContent>
                             <ul className="space-y-4">
@@ -135,7 +162,7 @@ function ChatBox({ context, visible }: ChatBoxProps) {
                         </AccordionItem>
                       )}
                     {message.content?.snippet && (
-                      <AccordionItem value="item-2">
+                      <AccordionItem value="item-2" className="max-w-80">
                         <AccordionTrigger>Code 🧑🏻‍💻</AccordionTrigger>
 
                         <AccordionContent>
@@ -151,7 +178,7 @@ function ChatBox({ context, visible }: ChatBoxProps) {
             </div>
           ))}
           <div ref={chatBoxRef} />
-        </div>
+        </ScrollArea>
       </CardContent>
       <CardFooter>
         <form
@@ -185,12 +212,58 @@ const ContentPage: React.FC = () => {
   const [chatboxExpanded, setChatboxExpanded] = React.useState<boolean>(false)
 
   const metaDescriptionEl = document.querySelector('meta[name=description]')
-
   const problemStatement = metaDescriptionEl?.getAttribute('content') as string
 
+  const [modal, setModal] = React.useState<ValidModel | null | undefined>(null)
+  const [apiKey, setApiKey] = React.useState<string | null | undefined>(null)
+
+  ;(async () => {
+    const { getApiKey, getModel } = useChromeStorage()
+    const modal = await getModel()
+    const apiKey = await getApiKey()
+
+    setModal(modal)
+    setApiKey(apiKey)
+  })()
+
   return (
-    <div className="__chat-container dark z-50">
-      <ChatBox visible={chatboxExpanded} context={{ problemStatement }} />
+    <div
+      className="dark z-50"
+      style={{
+        position: 'fixed',
+        bottom: '30px',
+        right: '30px',
+      }}
+    >
+      {!modal || !apiKey ? (
+        !chatboxExpanded ? null : (
+          <>
+            <Card className="mb-5">
+              <CardContent className="h-[500px] grid place-items-center">
+                <div className="grid place-items-center gap-4">
+                  <p className="text-center">
+                    Please configure the extension before using this feature.
+                  </p>
+                  <Button
+                    onClick={() => {
+                      chrome.runtime.sendMessage({ action: 'openPopup' })
+                    }}
+                  >
+                    configure
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )
+      ) : (
+        <ChatBox
+          visible={chatboxExpanded}
+          context={{ problemStatement }}
+          model={modal}
+          apikey={apiKey}
+        />
+      )}
       <div className="flex justify-end">
         <Button onClick={() => setChatboxExpanded(!chatboxExpanded)}>
           <Bot />

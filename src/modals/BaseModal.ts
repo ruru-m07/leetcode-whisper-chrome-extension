@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { ModalInterface } from '../interface/ModalInterface'
 import { outputSchema } from '@/schema/modeOutput'
+import { ChatHistoryParsed } from '@/interface/chatHistory'
 
 /**
  * This class is the base class for all modals.
@@ -17,7 +18,9 @@ export abstract class BaseModal extends ModalInterface {
 
   protected abstract makeApiCall(
     prompt: string,
-    systemPrompt: string
+    systemPrompt: string,
+    messages: ChatHistoryParsed[] | [],
+    extractedCode?: string
   ): Promise<{
     error: Error | null
     success: z.infer<typeof outputSchema> | null
@@ -25,11 +28,13 @@ export abstract class BaseModal extends ModalInterface {
 
   async generateResponse(
     prompt: string,
-    systemPrompt: string
+    systemPrompt: string,
+    messages: ChatHistoryParsed[] | [],
+    extractedCode?: string
   ): Promise<{
     error: Error | null
     success: z.infer<typeof outputSchema> | null
   }> {
-    return this.makeApiCall(prompt, systemPrompt)
+    return this.makeApiCall(prompt, systemPrompt, messages, extractedCode)
   }
 }

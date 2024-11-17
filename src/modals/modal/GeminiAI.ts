@@ -1,8 +1,9 @@
-import { generateObject, ProviderMetadata } from 'ai'
 import { ModalInterface } from '../../interface/ModalInterface'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { z } from 'zod'
 import { outputSchema } from '@/schema/modeOutput'
+import { ChatHistoryParsed } from '@/interface/chatHistory'
+import { generateObjectResponce } from '../utils'
 
 export class GeminiAI implements ModalInterface {
   name = 'geminiai'
@@ -14,7 +15,9 @@ export class GeminiAI implements ModalInterface {
 
   async generateResponse(
     prompt: string,
-    systemPrompt: string
+    systemPrompt: string,
+    messages: ChatHistoryParsed[] | [],
+    extractedCode?: string
   ): Promise<{
     error: Error | null
     success: z.infer<typeof outputSchema> | null
@@ -24,12 +27,12 @@ export class GeminiAI implements ModalInterface {
         apiKey: this.apiKey,
       })
 
-      const data = await generateObject({
+      let data = await generateObjectResponce({
         model: google('gemini-1.5-pro-latest'),
+        messages,
+        systemPrompt,
         prompt,
-        schema: outputSchema,
-        output: 'object',
-        system: systemPrompt,
+        extractedCode,
       })
 
       return {

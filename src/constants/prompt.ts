@@ -27,7 +27,6 @@ Suggest Code Snippets:
 
 Output Requirements:
 
-- Return responses in JSON format as markdown.
 - Keep the feedback short, friendly, and easy to understand.
 - snippet should always be code only and is optional.
 - Do not say hey everytime

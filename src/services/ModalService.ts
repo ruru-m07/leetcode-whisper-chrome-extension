@@ -1,14 +1,14 @@
 import { z } from 'zod'
-import { ValidModal } from '@/constants/valid_modals'
+import { ValidModel } from '@/constants/valid_modals'
 import { modals } from '@/modals'
 import { ModalInterface } from '@/interface/ModalInterface'
 import { outputSchema } from '@/schema/modeOutput'
-import { ProviderMetadata } from 'ai'
+import { ChatHistoryParsed } from '@/interface/chatHistory'
 
 export class ModalService {
   private activeModal: ModalInterface | null = null
 
-  selectModal(modalName: ValidModal, apiKey?: string) {
+  selectModal(modalName: ValidModel, apiKey?: string) {
     if (modals[modalName]) {
       this.activeModal = modals[modalName]
       this.activeModal.init(apiKey)
@@ -19,7 +19,9 @@ export class ModalService {
 
   async generate(
     prompt: string,
-    systemPrompt: string
+    systemPrompt: string,
+    messages: ChatHistoryParsed[] | [],
+    extractedCode?: string
   ): Promise<
     Promise<{
       error: Error | null
@@ -29,6 +31,11 @@ export class ModalService {
     if (!this.activeModal) {
       throw new Error('No modal selected')
     }
-    return this.activeModal.generateResponse(prompt, systemPrompt)
+    return this.activeModal.generateResponse(
+      prompt,
+      systemPrompt,
+      messages,
+      extractedCode
+    )
   }
 }

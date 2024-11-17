@@ -14,13 +14,13 @@ import {
   SelectValue,
   SelectTrigger,
 } from '@/components/ui/select'
-import { VALID_MODALS, type ValidModal } from './constants/valid_modals'
+import { VALID_MODELS, type ValidModel } from './constants/valid_modals'
 import { Input } from '@/components/ui/input'
 import { useChromeStorage } from './hooks/useChromeStorage'
 
 const Popup: React.FC = () => {
   const [apikey, setApikey] = React.useState<string | null>(null)
-  const [modal, setModal] = React.useState<ValidModal | null>(null)
+  const [model, setModel] = React.useState<ValidModel | null>(null)
   const [isLoaded, setIsLoaded] = React.useState<boolean>(false)
 
   const [isloading, setIsloading] = useState<boolean>(false)
@@ -34,10 +34,10 @@ const Popup: React.FC = () => {
     try {
       setIsloading(true)
 
-      const { setApiKey, setModal } = useChromeStorage()
-      if (apikey && modal) {
+      const { setApiKey, setModel } = useChromeStorage()
+      if (apikey && model) {
         setApiKey(apikey)
-        setModal(modal)
+        setModel(model)
       }
 
       setSubmitMessage({
@@ -58,12 +58,12 @@ const Popup: React.FC = () => {
     const loadOpenAPIKey = async () => {
       if (!chrome) return
 
-      const { getApiKey, getModal } = useChromeStorage()
-      const modal = await getModal()
+      const { getApiKey, getModel } = useChromeStorage()
+      const model = await getModel()
       const apiKey = await getApiKey()
 
-      if (modal) {
-        setModal(modal)
+      if (model) {
+        setModel(model)
       }
       if (apiKey) {
         setApikey(`${apiKey.substring(0, 12)}-XXXXXX`)
@@ -100,25 +100,25 @@ const Popup: React.FC = () => {
           >
             <div className="space-y-2">
               <label htmlFor="text" className="text-xs text-muted-foreground">
-                select a modal
+                select a model
               </label>
               <Select
-                onValueChange={(v: ValidModal) => setModal(v)}
-                value={modal || ''}
+                onValueChange={(v: ValidModel) => setModel(v)}
+                value={model || ''}
               >
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a modal" />
+                  <SelectValue placeholder="Select a model" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectLabel>Modal</SelectLabel>
+                    <SelectLabel>Model</SelectLabel>
                     <SelectSeparator />
-                    {VALID_MODALS.map((modalOption) => (
+                    {VALID_MODELS.map((modelOption) => (
                       <SelectItem
-                        key={modalOption.name}
-                        value={modalOption.name}
+                        key={modelOption.name}
+                        value={modelOption.name}
                       >
-                        {modalOption.modal}
+                        {modelOption.model}
                       </SelectItem>
                     ))}
                   </SelectGroup>
@@ -132,7 +132,7 @@ const Popup: React.FC = () => {
               <Input
                 type="text"
                 required
-                disabled={!modal}
+                disabled={!model}
                 value={apikey || ''}
                 onChange={(e) => setApikey(e.target.value)}
                 placeholder="Enter OpenAI API Key"

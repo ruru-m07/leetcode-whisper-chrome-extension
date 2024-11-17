@@ -1,9 +1,9 @@
 /**
- * List of valid modals that can be used in the application.
+ * List of valid models that can be used in the application.
  */
-export const VALID_MODALS = [
-  { modal: 'chatgpt-4o-latest', name: 'openai' },
-  { modal: 'gemini-1.0-pro', name: 'geminiai' },
-  { modal: 'chrome-ai', name: 'chromeai' },
+export const VALID_MODELS = [
+  { model: 'chatgpt-4o-latest', name: 'openai' },
+  { model: 'gemini-1.0-pro', name: 'geminiai' },
+  { model: 'chrome-ai', name: 'chromeai' },
 ]
-export type ValidModal = 'openai' | 'geminiai' | 'chromeai'
+export type ValidModel = 'openai' | 'geminiai' | 'chromeai'

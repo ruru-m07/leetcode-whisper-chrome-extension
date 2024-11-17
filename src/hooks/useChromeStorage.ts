@@ -1,4 +1,4 @@
-import { ValidModal } from '@/constants/valid_modals'
+import { ValidModel } from '@/constants/valid_modals'
 
 export const useChromeStorage = () => {
   const setItem = async <T>(key: string, value: T): Promise<void> => {
@@ -12,8 +12,8 @@ export const useChromeStorage = () => {
 
   return {
     setApiKey: (apiKey: string) => setItem('apiKey', apiKey),
-    setModal: (modal: ValidModal) => setItem('modal', modal),
+    setModel: (model: ValidModel) => setItem('model', model),
     getApiKey: () => getItem<string>('apiKey'),
-    getModal: () => getItem<ValidModal>('modal'),
+    getModel: () => getItem<ValidModel>('model'),
   }
 }

@@ -1,9 +1,11 @@
-import { ModalInterface } from '../../interface/ModalInterface'
+import {
+  GenerateResponseParamsType,
+  GenerateResponseReturnType,
+  ModalInterface,
+} from '../../interface/ModalInterface'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { z } from 'zod'
-import { outputSchema } from '@/schema/modeOutput'
-import { ChatHistoryParsed } from '@/interface/chatHistory'
 import { generateObjectResponce } from '../utils'
+import { VALID_MODELS } from '@/constants/valid_modals'
 
 export class GeminiAI implements ModalInterface {
   name = 'geminiai'
@@ -14,25 +16,21 @@ export class GeminiAI implements ModalInterface {
   }
 
   async generateResponse(
-    prompt: string,
-    systemPrompt: string,
-    messages: ChatHistoryParsed[] | [],
-    extractedCode?: string
-  ): Promise<{
-    error: Error | null
-    success: z.infer<typeof outputSchema> | null
-  }> {
+    props: GenerateResponseParamsType
+  ): GenerateResponseReturnType {
     try {
       const google = createGoogleGenerativeAI({
         apiKey: this.apiKey,
       })
 
       let data = await generateObjectResponce({
-        model: google('gemini-1.5-pro-latest'),
-        messages,
-        systemPrompt,
-        prompt,
-        extractedCode,
+        model: google(
+          VALID_MODELS.find((model) => model.name === this.name)?.model!
+        ),
+        messages: props.messages,
+        systemPrompt: props.systemPrompt,
+        prompt: props.prompt,
+        extractedCode: props.extractedCode,
       })
 
       return {

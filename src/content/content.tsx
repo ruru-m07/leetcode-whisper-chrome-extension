@@ -86,12 +86,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
     const PCH = parseChatHistory(chatHistory)
 
-    const { error, success } = await modalService.generate(
-      `${value}`,
-      systemPromptModified,
-      PCH,
-      extractedCode
-    )
+    const { error, success } = await modalService.generate({
+      prompt: `${value}`,
+      systemPrompt: systemPromptModified,
+      messages: PCH,
+      extractedCode: extractedCode,
+    })
 
     if (error) {
       setChatHistory((prev) => [

@@ -1,9 +1,11 @@
-import { z } from 'zod'
-import { outputSchema } from '@/schema/modeOutput'
-import { ModalInterface } from '../../interface/ModalInterface'
+import {
+  GenerateResponseParamsType,
+  GenerateResponseReturnType,
+  ModalInterface,
+} from '../../interface/ModalInterface'
 import { createOpenAI } from '@ai-sdk/openai'
-import { ChatHistoryParsed } from '@/interface/chatHistory'
 import { generateObjectResponce } from '../utils'
+import { VALID_MODELS } from '@/constants/valid_modals'
 
 export class OpenAI implements ModalInterface {
   name = 'openai'
@@ -14,14 +16,8 @@ export class OpenAI implements ModalInterface {
   }
 
   async generateResponse(
-    prompt: string,
-    systemPrompt: string,
-    messages: ChatHistoryParsed[] | [],
-    extractedCode?: string
-  ): Promise<{
-    error: Error | null
-    success: z.infer<typeof outputSchema> | null
-  }> {
+    props: GenerateResponseParamsType
+  ): GenerateResponseReturnType {
     try {
       const openai = createOpenAI({
         compatibility: 'strict',
@@ -29,11 +25,13 @@ export class OpenAI implements ModalInterface {
       })
 
       let data = await generateObjectResponce({
-        model: openai('gpt-3.5-turbo'),
-        messages,
-        systemPrompt,
-        prompt,
-        extractedCode,
+        model: openai(
+          VALID_MODELS.find((model) => model.name === this.name)?.model!
+        ),
+        messages: props.messages,
+        systemPrompt: props.systemPrompt,
+        prompt: props.prompt,
+        extractedCode: props.extractedCode,
       })
 
       return {

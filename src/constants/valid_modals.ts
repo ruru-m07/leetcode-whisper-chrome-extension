@@ -3,7 +3,7 @@
  */
 export const VALID_MODELS = [
   { model: 'gpt-3.5-turbo', name: 'openai' },
-  { model: 'gemini-1.0-pro', name: 'geminiai' },
+  { model: 'gemini-1.5-pro-latest', name: 'geminiai' },
 ]
 
 /**

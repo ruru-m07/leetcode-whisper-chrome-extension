@@ -22,7 +22,6 @@ import { ChatHistory, parseChatHistory } from '@/interface/chatHistory'
 import { ValidModel } from '@/constants/valid_modals'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
-import leetcodeimage from '../assets/leetcode.png'
 interface ChatBoxProps {
   visible: boolean
   context: {

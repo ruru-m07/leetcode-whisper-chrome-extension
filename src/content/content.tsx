@@ -31,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { LIMIT_VALUE } from '@/lib/indexedDB'
+import { useIndexDB } from '@/hooks/useIndexDB'
 
 interface ChatBoxProps {
   visible: boolean
@@ -53,6 +55,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 }) => {
   const [value, setValue] = React.useState('')
   const [chatHistory, setChatHistory] = React.useState<ChatHistory[]>([])
+  const [priviousChatHistory, setPreviousChatHistory] = React.useState<
+    ChatHistory[]
+  >([])
   const [isResponseLoading, setIsResponseLoading] =
     React.useState<boolean>(false)
   // const chatBoxRef = useRef<HTMLDivElement>(null)
@@ -60,8 +65,22 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const lastMessageRef = useRef<HTMLDivElement>(null)
 
+  const [offset, setOffset] = React.useState<number>(0)
+  const [totalMessages, setTotalMessages] = React.useState<number>(0)
+  const [isPriviousMsgLoading, setIsPriviousMsgLoading] =
+    React.useState<boolean>(false)
+  const { fetchChatHistory, saveChatHistory } = useIndexDB()
+
+  const getProblemName = () => {
+    const url = window.location.href
+    const match = /\/problems\/([^/]+)/.exec(url)
+    return match ? match[1] : 'Unknown Problem'
+  }
+
+  const problemName = getProblemName()
+
   useEffect(() => {
-    if (lastMessageRef.current) {
+    if (lastMessageRef.current && !isPriviousMsgLoading) {
       lastMessageRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [chatHistory, isResponseLoading])
@@ -117,24 +136,35 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     })
 
     if (error) {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: error.message,
-        },
+      const errorMessage: ChatHistory = {
+        role: 'assistant',
+        content: error.message,
+      }
+      await saveChatHistory(problemName, [
+        ...priviousChatHistory,
+        { role: 'user', content: value },
+        errorMessage,
       ])
+      setPreviousChatHistory((prev) => [...prev, errorMessage])
+      setChatHistory((prev) => {
+        const updatedChatHistory: ChatHistory[] = [...prev, errorMessage]
+        return updatedChatHistory
+      })
       lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
     if (success) {
-      setChatHistory((prev) => [
-        ...prev,
-        {
-          role: 'assistant',
-          content: success,
-        },
+      const res: ChatHistory = {
+        role: 'assistant',
+        content: success,
+      }
+      await saveChatHistory(problemName, [
+        ...priviousChatHistory,
+        { role: 'user', content: value },
+        res,
       ])
+      setPreviousChatHistory((prev) => [...prev, res])
+      setChatHistory((prev) => [...prev, res])
       setValue('')
       lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
@@ -142,9 +172,58 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     setIsResponseLoading(false)
   }
 
-  const onSendMessage = (value: string) => {
+  const loadInitialChatHistory = async () => {
+    const { totalMessageCount, chatHistory, allChatHistory } =
+      await fetchChatHistory(problemName, LIMIT_VALUE, 0)
+    setPreviousChatHistory(allChatHistory || [])
+
+    setTotalMessages(totalMessageCount)
+    setChatHistory(chatHistory)
+    setOffset(LIMIT_VALUE)
+  }
+
+  useEffect(() => {
+    loadInitialChatHistory()
+  }, [problemName])
+
+  const loadMoreMessages = async () => {
+    if (totalMessages < offset) {
+      return
+    }
+    setIsPriviousMsgLoading(true)
+    const { chatHistory: moreMessages } = await fetchChatHistory(
+      problemName,
+      LIMIT_VALUE,
+      offset
+    )
+
+    if (moreMessages.length > 0) {
+      setChatHistory((prev) => [...moreMessages, ...prev]) // Correctly merge the new messages with the previous ones
+      setOffset((prevOffset) => prevOffset + LIMIT_VALUE)
+    }
+
+    setTimeout(() => {
+      setIsPriviousMsgLoading(false)
+    }, 500)
+  }
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget
+    if (target.scrollTop === 0) {
+      console.log('Reached the top, loading more messages...')
+      loadMoreMessages()
+    }
+  }
+
+  const onSendMessage = async (value: string) => {
     setIsResponseLoading(true)
-    setChatHistory((prev) => [...prev, { role: 'user', content: value }])
+    const newMessage: ChatHistory = { role: 'user', content: value }
+
+    setPreviousChatHistory((prev) => {
+      return [...prev, newMessage]
+    })
+    setChatHistory([...chatHistory, newMessage])
+
     lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
     handleGenerateAIResponse()
   }
@@ -152,13 +231,16 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   if (!visible) return <></>
 
   return (
-    <Card className="mb-5">
-      <div className="p-2">
+    <Card className="mb-2 ">
+      <div className="flex items-center jusfitfy-center bg-[#333333] p-1">
+        <h3 className="text-white text- p-2 capitalize flex-1 ">
+          {problemName.replace(/-/g, ' ')}
+        </h3>
         <Select
           onValueChange={(v: ValidModel) => heandelModel(v)}
           value={selectedModel}
         >
-          <SelectTrigger className="w-full">
+          <SelectTrigger className="w-[50%] border-white visible:focus-ring-0 visible:focus-ring-offset-0">
             <SelectValue placeholder="Select a model" />
           </SelectTrigger>
           <SelectContent>
@@ -177,9 +259,20 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       <CardContent className="p-2">
         {chatHistory.length > 0 ? (
           <ScrollArea
-            className="space-y-4 h-[510px] w-[400px] p-2"
+            className="space-y-4 h-[500px] w-[400px] p-2"
             ref={scrollAreaRef}
+            onScroll={handleScroll}
           >
+            {totalMessages > offset && (
+              <div className="flex w-full items-center justify-center">
+                <Button
+                  className="text-sm p-1 m-x-auto bg-transpernent text-white hover:bg-transpernent"
+                  onClick={loadMoreMessages}
+                >
+                  Load Privious Messages
+                </Button>
+              </div>
+            )}
             {chatHistory.map((message, index) => (
               <div
                 key={index}

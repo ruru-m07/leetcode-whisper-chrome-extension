@@ -7,8 +7,8 @@ import { createOpenAI } from '@ai-sdk/openai'
 import { generateObjectResponce } from '../utils'
 import { VALID_MODELS } from '@/constants/valid_modals'
 
-export class OpenAI implements ModalInterface {
-  name = 'openai'
+export class OpenAI_3_5_turbo implements ModalInterface {
+  name = 'openai_3.5_turbo'
   private apiKey: string = ''
 
   init(apiKey: string) {

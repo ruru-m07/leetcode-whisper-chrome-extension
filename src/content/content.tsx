@@ -22,6 +22,7 @@ import { ChatHistory, parseChatHistory } from '@/interface/chatHistory'
 import { ValidModel } from '@/constants/valid_modals'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
+import leetcodeimage from '../assets/leetcode.png'
 interface ChatBoxProps {
   visible: boolean
   context: {
@@ -39,6 +40,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 }) => {
   const [value, setValue] = React.useState('')
   const [chatHistory, setChatHistory] = React.useState<ChatHistory[]>([])
+  const [isResponceLoading, setIsResponceLoading] =
+    React.useState<boolean>(false)
 
   const chatBoxRef = useRef<HTMLDivElement>(null)
 
@@ -115,9 +118,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       setValue('')
       chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
+
+    setIsResponceLoading(false)
   }
 
   const onSendMessage = (value: string) => {
+    setIsResponceLoading(true)
     setChatHistory((prev) => [...prev, { role: 'user', content: value }])
     chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
     handleGenerateAIResponse()
@@ -128,57 +134,70 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   return (
     <Card className="mb-5">
       <CardContent>
-        <ScrollArea className="space-y-4 h-[400px] w-[500px] mt-5 p-4">
-          {chatHistory.map((message, index) => (
-            <div
-              key={index}
-              className={cn(
-                'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm my-2',
-                message.role === 'user'
-                  ? 'ml-auto bg-primary text-primary-foreground'
-                  : 'bg-muted'
-              )}
-            >
-              <>
-                <p className="max-w-80">
-                  {typeof message.content === 'string'
-                    ? message.content
-                    : message.content.feedback}
-                </p>
+        {chatHistory.length > 0 ? (
+          <ScrollArea className="space-y-4 h-[400px] w-[500px] mt-5 p-4">
+            {chatHistory.map((message, index) => (
+              <div
+                key={index}
+                className={cn(
+                  'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm my-2',
+                  message.role === 'user'
+                    ? 'ml-auto bg-primary text-primary-foreground'
+                    : 'bg-muted'
+                )}
+              >
+                <>
+                  <p className="max-w-80">
+                    {typeof message.content === 'string'
+                      ? message.content
+                      : message.content.feedback}
+                  </p>
 
-                {!(typeof message.content === 'string') && (
-                  <Accordion type="multiple">
-                    {message.content?.hints &&
-                      message.content.hints.length > 0 && (
-                        <AccordionItem value="item-1" className="max-w-80">
-                          <AccordionTrigger>Hints 👀</AccordionTrigger>
+                  {!(typeof message.content === 'string') && (
+                    <Accordion type="multiple">
+                      {message.content?.hints &&
+                        message.content.hints.length > 0 && (
+                          <AccordionItem value="item-1" className="max-w-80">
+                            <AccordionTrigger>Hints 👀</AccordionTrigger>
+                            <AccordionContent>
+                              <ul className="space-y-4">
+                                {message.content?.hints?.map((e) => (
+                                  <li key={e}>{e}</li>
+                                ))}
+                              </ul>
+                            </AccordionContent>
+                          </AccordionItem>
+                        )}
+                      {message.content?.snippet && (
+                        <AccordionItem value="item-2" className="max-w-80">
+                          <AccordionTrigger>Code 🧑🏻‍💻</AccordionTrigger>
+
                           <AccordionContent>
-                            <ul className="space-y-4">
-                              {message.content?.hints?.map((e) => (
-                                <li key={e}>{e}</li>
-                              ))}
-                            </ul>
+                            <pre className="bg-black p-3 rounded-md shadow-lg text-sm">
+                              <code>{message.content.snippet}</code>
+                            </pre>
                           </AccordionContent>
                         </AccordionItem>
                       )}
-                    {message.content?.snippet && (
-                      <AccordionItem value="item-2" className="max-w-80">
-                        <AccordionTrigger>Code 🧑🏻‍💻</AccordionTrigger>
-
-                        <AccordionContent>
-                          <pre className="bg-black p-3 rounded-md shadow-lg ">
-                            <code>{message.content.snippet}</code>
-                          </pre>
-                        </AccordionContent>
-                      </AccordionItem>
-                    )}
-                  </Accordion>
-                )}
-              </>
-            </div>
-          ))}
-          <div ref={chatBoxRef} />
-        </ScrollArea>
+                    </Accordion>
+                  )}
+                </>
+              </div>
+            ))}
+            {isResponceLoading && (
+              <div className={'flex w-max max-w-[75%] flex-col my-2'}>
+                <div className="w-5 h-5 rounded-full animate-pulse bg-primary"></div>
+              </div>
+            )}
+            <div ref={chatBoxRef} />
+          </ScrollArea>
+        ) : (
+          <div>
+            <p className="flex items-center justify-center h-[400px] w-[500px] text-center space-y-4">
+              No messages yet.
+            </p>
+          </div>
+        )}
       </CardContent>
       <CardFooter>
         <form
@@ -196,6 +215,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             autoComplete="off"
             value={value}
             onChange={(event) => setValue(event.target.value)}
+            disabled={isResponceLoading}
             required
           />
           <Button type="submit" size="icon" disabled={value.length === 0}>

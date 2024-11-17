@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Bot, Send } from 'lucide-react'
-
+import { Bot, Copy, Send } from 'lucide-react'
+import { Highlight, themes } from 'prism-react-renderer'
 import { Input } from '@/components/ui/input'
 import { SYSTEM_PROMPT } from '@/constants/prompt'
 import { extractCode } from './util'
@@ -101,11 +101,11 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     const extractedCode = extractCode(userCurrentCodeContainer)
 
     const systemPromptModified = SYSTEM_PROMPT.replace(
-      '{{problem_statement}}',
+      /{{problem_statement}}/gi,
       context.problemStatement
     )
-      .replace('{{programming_language}}', programmingLanguage)
-      .replace('{{user_code}}', extractedCode)
+      .replace(/{{programming_language}}/g, programmingLanguage)
+      .replace(/{{user_code}}/g, extractedCode)
 
     const PCH = parseChatHistory(chatHistory)
 
@@ -176,7 +176,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       </div>
       <CardContent className="p-2">
         {chatHistory.length > 0 ? (
-          <ScrollArea className="space-y-4 h-[510px] w-[400px] p-2" ref={scrollAreaRef}>
+          <ScrollArea
+            className="space-y-4 h-[510px] w-[400px] p-2"
+            ref={scrollAreaRef}
+          >
             {chatHistory.map((message, index) => (
               <div
                 key={index}
@@ -214,9 +217,57 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                           <AccordionTrigger>Code 🧑🏻‍💻</AccordionTrigger>
 
                           <AccordionContent>
-                            <pre className="bg-black p-3 rounded-md shadow-lg text-xs">
-                              <code>{message.content.snippet}</code>
-                            </pre>
+                            <div className="mt-4 rounded-md">
+                              <div className="relative">
+                                <Copy
+                                  onClick={() => {
+                                    if (typeof message.content !== 'string')
+                                      navigator.clipboard.writeText(
+                                        `${message.content?.snippet}`
+                                      )
+                                  }}
+                                  className="absolute right-2 top-2 h-4 w-4"
+                                />
+                                <Highlight
+                                  theme={themes.dracula}
+                                  code={message.content?.snippet || ''}
+                                  language={
+                                    message.content?.programmingLanguage?.toLowerCase() ||
+                                    'javascript'
+                                  }
+                                >
+                                  {({
+                                    className,
+                                    style,
+                                    tokens,
+                                    getLineProps,
+                                    getTokenProps,
+                                  }) => (
+                                    <pre
+                                      style={style}
+                                      className={cn(
+                                        className,
+                                        'p-3 rounded-md'
+                                      )}
+                                    >
+                                      {tokens.map((line, i) => (
+                                        <div
+                                          key={i}
+                                          {...getLineProps({ line })}
+                                        >
+                                          {line.map((token, key) => (
+                                            <span
+                                              key={key}
+                                              {...getTokenProps({ token })}
+                                            />
+                                          ))}
+                                        </div>
+                                      ))}
+                                    </pre>
+                                  )}
+                                </Highlight>
+                              </div>
+                            </div>
                           </AccordionContent>
                         </AccordionItem>
                       )}

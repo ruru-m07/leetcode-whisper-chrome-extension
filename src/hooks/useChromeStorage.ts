@@ -3,10 +3,6 @@ import { ValidModel } from '@/constants/valid_modals'
 export const useChromeStorage = () => {
   return {
     setKeyModel: async (apiKey: string, model: ValidModel) => {
-      console.log({
-        apiKey,
-        model,
-      })
       chrome.storage.local.set({ [model]: apiKey })
     },
 

@@ -77,7 +77,6 @@ const Popup: React.FC = () => {
       setSelectModel(v)
       setModel(v)
       setSelectedModel(v)
-      console.log('asdasadas', (await getKeyModel(await selectModel())).apiKey)
       setApikey((await getKeyModel(await selectModel())).apiKey)
     }
   }

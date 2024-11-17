@@ -1,4 +1,4 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Bot, Send } from 'lucide-react'
 
@@ -53,11 +53,18 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 }) => {
   const [value, setValue] = React.useState('')
   const [chatHistory, setChatHistory] = React.useState<ChatHistory[]>([])
-  const [isResponceLoading, setIsResponceLoading] =
+  const [isResponseLoading, setIsResponseLoading] =
     React.useState<boolean>(false)
+  // const chatBoxRef = useRef<HTMLDivElement>(null)
 
-  const chatBoxRef = useRef<HTMLDivElement>(null)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const lastMessageRef = useRef<HTMLDivElement>(null)
 
+  useEffect(() => {
+    if (lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [chatHistory, isResponseLoading])
   /**
    * Handles the generation of an AI response.
    *
@@ -117,7 +124,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           content: error.message,
         },
       ])
-      chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
+      lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
     if (success) {
@@ -129,16 +136,16 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         },
       ])
       setValue('')
-      chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
+      lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
 
-    setIsResponceLoading(false)
+    setIsResponseLoading(false)
   }
 
   const onSendMessage = (value: string) => {
-    setIsResponceLoading(true)
+    setIsResponseLoading(true)
     setChatHistory((prev) => [...prev, { role: 'user', content: value }])
-    chatBoxRef.current?.scrollIntoView({ behavior: 'smooth' })
+    lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
     handleGenerateAIResponse()
   }
 
@@ -169,7 +176,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       </div>
       <CardContent className="p-2">
         {chatHistory.length > 0 ? (
-          <ScrollArea className="space-y-4 h-[510px] w-[400px] p-2">
+          <ScrollArea className="space-y-4 h-[510px] w-[400px] p-2" ref={scrollAreaRef}>
             {chatHistory.map((message, index) => (
               <div
                 key={index}
@@ -218,12 +225,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                 </>
               </div>
             ))}
-            {isResponceLoading && (
+            {isResponseLoading && (
               <div className={'flex w-max max-w-[75%] flex-col my-2'}>
                 <div className="w-5 h-5 rounded-full animate-pulse bg-primary"></div>
               </div>
             )}
-            <div ref={chatBoxRef} />
+            <div ref={lastMessageRef} />
           </ScrollArea>
         ) : (
           <div>
@@ -237,8 +244,9 @@ const ChatBox: React.FC<ChatBoxProps> = ({
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            if (value.length === 0) return
+            if (value.trim().length === 0) return
             onSendMessage(value)
+            setValue('')
           }}
           className="flex w-full items-center space-x-2"
         >
@@ -249,7 +257,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             autoComplete="off"
             value={value}
             onChange={(event) => setValue(event.target.value)}
-            disabled={isResponceLoading}
+            disabled={isResponseLoading}
             required
           />
           <Button type="submit" size="icon" disabled={value.length === 0}>

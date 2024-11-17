@@ -126,7 +126,7 @@ const Popup: React.FC = () => {
                         key={modelOption.name}
                         value={modelOption.name}
                       >
-                        {modelOption.model}
+                        {modelOption.display}
                       </SelectItem>
                     ))}
                   </SelectGroup>

@@ -29,15 +29,16 @@ const Popup: React.FC = () => {
     message: string
   } | null>(null)
 
+  const [selectedModel, setSelectedModel] = useState<ValidModel>()
+
   const updatestorage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     try {
       setIsloading(true)
 
-      const { setApiKey, setModel } = useChromeStorage()
+      const { setKeyModel } = useChromeStorage()
       if (apikey && model) {
-        setApiKey(apikey)
-        setModel(model)
+        await setKeyModel(apikey, model)
       }
 
       setSubmitMessage({
@@ -55,24 +56,31 @@ const Popup: React.FC = () => {
   }
 
   React.useEffect(() => {
-    const loadOpenAPIKey = async () => {
+    const loadChromeStorage = async () => {
       if (!chrome) return
 
-      const { getApiKey, getModel } = useChromeStorage()
-      const model = await getModel()
-      const apiKey = await getApiKey()
+      const { selectModel } = useChromeStorage()
 
-      if (model) {
-        setModel(model)
-      }
-      if (apiKey) {
-        setApikey(`${apiKey.substring(0, 12)}-XXXXXX`)
-      }
+      setModel(await selectModel())
+      setSelectedModel(await selectModel())
+
       setIsLoaded(true)
     }
 
-    loadOpenAPIKey()
+    loadChromeStorage()
   }, [])
+
+  React.useEffect(() => {}, [model])
+
+  const heandelModel = (v: ValidModel) => {
+    if (v) {
+      const { setSelectModel } = useChromeStorage()
+      setSelectModel(v)
+      setModel(v)
+      setSelectedModel(v)
+      setApikey('')
+    }
+  }
 
   return (
     <div className="relative p-4 w-[350px] bg-background">
@@ -103,8 +111,8 @@ const Popup: React.FC = () => {
                 select a model
               </label>
               <Select
-                onValueChange={(v: ValidModel) => setModel(v)}
-                value={model || ''}
+                onValueChange={(v: ValidModel) => heandelModel(v)}
+                value={selectedModel}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a model" />

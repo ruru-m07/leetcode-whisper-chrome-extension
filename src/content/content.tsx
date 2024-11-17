@@ -19,8 +19,18 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { ModalService } from '@/services/ModalService'
 import { useChromeStorage } from '@/hooks/useChromeStorage'
 import { ChatHistory, parseChatHistory } from '@/interface/chatHistory'
-import { ValidModel } from '@/constants/valid_modals'
+import { VALID_MODELS, ValidModel } from '@/constants/valid_modals'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface ChatBoxProps {
   visible: boolean
@@ -29,6 +39,8 @@ interface ChatBoxProps {
   }
   model: ValidModel
   apikey: string
+  heandelModel: (v: ValidModel) => void
+  selectedModel: ValidModel | undefined
 }
 
 const ChatBox: React.FC<ChatBoxProps> = ({
@@ -36,6 +48,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   visible,
   model,
   apikey,
+  heandelModel,
+  selectedModel,
 }) => {
   const [value, setValue] = React.useState('')
   const [chatHistory, setChatHistory] = React.useState<ChatHistory[]>([])
@@ -132,17 +146,38 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   return (
     <Card className="mb-5">
-      <CardContent>
+      <div className="p-2">
+        <Select
+          onValueChange={(v: ValidModel) => heandelModel(v)}
+          value={selectedModel}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Model</SelectLabel>
+              <SelectSeparator />
+              {VALID_MODELS.map((modelOption) => (
+                <SelectItem key={modelOption.name} value={modelOption.name}>
+                  {modelOption.model}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </div>
+      <CardContent className="p-2">
         {chatHistory.length > 0 ? (
-          <ScrollArea className="space-y-4 h-[400px] w-[500px] mt-5 p-4">
+          <ScrollArea className="space-y-4 h-[510px] w-[400px] p-2">
             {chatHistory.map((message, index) => (
               <div
                 key={index}
                 className={cn(
-                  'flex w-max max-w-[75%] flex-col gap-2 rounded-lg px-3 py-2 text-sm my-2',
+                  'flex w-max max-w-[75%] flex-col gap-2 px-3 py-2 text-sm my-4',
                   message.role === 'user'
-                    ? 'ml-auto bg-primary text-primary-foreground'
-                    : 'bg-muted'
+                    ? 'ml-auto bg-primary text-primary-foreground rounded-bl-lg rounded-tl-lg rounded-tr-lg '
+                    : 'bg-muted rounded-br-lg rounded-tl-lg rounded-tr-lg'
                 )}
               >
                 <>
@@ -172,7 +207,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                           <AccordionTrigger>Code 🧑🏻‍💻</AccordionTrigger>
 
                           <AccordionContent>
-                            <pre className="bg-black p-3 rounded-md shadow-lg text-sm">
+                            <pre className="bg-black p-3 rounded-md shadow-lg text-xs">
                               <code>{message.content.snippet}</code>
                             </pre>
                           </AccordionContent>
@@ -192,7 +227,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           </ScrollArea>
         ) : (
           <div>
-            <p className="flex items-center justify-center h-[400px] w-[500px] text-center space-y-4">
+            <p className="flex items-center justify-center h-[510px] w-[400px] text-center space-y-4">
               No messages yet.
             </p>
           </div>
@@ -237,13 +272,34 @@ const ContentPage: React.FC = () => {
   const [apiKey, setApiKey] = React.useState<string | null | undefined>(null)
 
   ;(async () => {
-    const { getApiKey, getModel } = useChromeStorage()
-    const modal = await getModel()
-    const apiKey = await getApiKey()
+    const { getKeyModel, selectModel } = useChromeStorage()
+    const { model, apiKey } = await getKeyModel(await selectModel())
 
-    setModal(modal)
+    setModal(model)
     setApiKey(apiKey)
   })()
+
+  const [selectedModel, setSelectedModel] = React.useState<ValidModel>()
+
+  const heandelModel = (v: ValidModel) => {
+    if (v) {
+      const { setSelectModel } = useChromeStorage()
+      setSelectModel(v)
+      setSelectedModel(v)
+    }
+  }
+
+  React.useEffect(() => {
+    const loadChromeStorage = async () => {
+      if (!chrome) return
+
+      const { selectModel } = useChromeStorage()
+
+      setSelectedModel(await selectModel())
+    }
+
+    loadChromeStorage()
+  }, [])
 
   return (
     <div
@@ -260,16 +316,54 @@ const ContentPage: React.FC = () => {
             <Card className="mb-5">
               <CardContent className="h-[500px] grid place-items-center">
                 <div className="grid place-items-center gap-4">
-                  <p className="text-center">
-                    Please configure the extension before using this feature.
-                  </p>
-                  <Button
-                    onClick={() => {
-                      chrome.runtime.sendMessage({ action: 'openPopup' })
-                    }}
-                  >
-                    configure
-                  </Button>
+                  {!selectedModel && (
+                    <>
+                      <p className="text-center">
+                        Please configure the extension before using this
+                        feature.
+                      </p>
+                      <Button
+                        onClick={() => {
+                          chrome.runtime.sendMessage({ action: 'openPopup' })
+                        }}
+                      >
+                        configure
+                      </Button>
+                    </>
+                  )}
+                  {selectedModel && (
+                    <>
+                      <p>
+                        We couldn't find any API key for selected model{' '}
+                        <b>
+                          <u>{selectedModel}</u>
+                        </b>
+                      </p>
+                      <p>you can select another models</p>
+                      <Select
+                        onValueChange={(v: ValidModel) => heandelModel(v)}
+                        value={selectedModel}
+                      >
+                        <SelectTrigger className="w-56">
+                          <SelectValue placeholder="Select a model" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            <SelectLabel>Model</SelectLabel>
+                            <SelectSeparator />
+                            {VALID_MODELS.map((modelOption) => (
+                              <SelectItem
+                                key={modelOption.name}
+                                value={modelOption.name}
+                              >
+                                {modelOption.model}
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -281,12 +375,16 @@ const ContentPage: React.FC = () => {
           context={{ problemStatement }}
           model={modal}
           apikey={apiKey}
+          heandelModel={heandelModel}
+          selectedModel={selectedModel}
         />
       )}
       <div className="flex justify-end">
-        <Button onClick={() => setChatboxExpanded(!chatboxExpanded)}>
+        <Button
+          size={'icon'}
+          onClick={() => setChatboxExpanded(!chatboxExpanded)}
+        >
           <Bot />
-          Ask AI
         </Button>
       </div>
     </div>

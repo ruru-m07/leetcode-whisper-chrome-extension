@@ -1,19 +1,27 @@
 import { ValidModel } from '@/constants/valid_modals'
 
 export const useChromeStorage = () => {
-  const setItem = async <T>(key: string, value: T): Promise<void> => {
-    await chrome.storage.local.set({ [key]: value })
-  }
-
-  const getItem = async <T>(key: string): Promise<T | undefined> => {
-    const result = await chrome.storage.local.get(key)
-    return result[key] as T | undefined
-  }
-
   return {
-    setApiKey: (apiKey: string) => setItem('apiKey', apiKey),
-    setModel: (model: ValidModel) => setItem('model', model),
-    getApiKey: () => getItem<string>('apiKey'),
-    getModel: () => getItem<ValidModel>('model'),
+    setKeyModel: async (apiKey: string, model: ValidModel) => {
+      console.log({
+        apiKey,
+        model,
+      })
+      chrome.storage.local.set({ [model]: apiKey })
+    },
+
+    getKeyModel: async (model: ValidModel) => {
+      const result = await chrome.storage.local.get(model)
+      return { model: model, apiKey: result[model] }
+    },
+
+    setSelectModel: async (model: ValidModel) => {
+      await chrome.storage.local.set({ ['selectedModel']: model })
+    },
+
+    selectModel: async () => {
+      const result = await chrome.storage.local.get('selectedModel')
+      return result['selectedModel'] as ValidModel
+    },
   }
 }

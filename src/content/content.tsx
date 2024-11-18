@@ -84,7 +84,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
     if (lastMessageRef.current && !isPriviousMsgLoading) {
       lastMessageRef.current.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [chatHistory, isResponseLoading])
+    setTimeout(() => {
+      inputFieldRef.current?.focus()
+    }, 0)
+  }, [chatHistory, isResponseLoading, visible])
   /**
    * Handles the generation of an AI response.
    *
@@ -102,7 +105,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
    * @function handleGenerateAIResponse
    * @returns {Promise<void>} A promise that resolves when the AI response generation is complete.
    */
-  const handleGenerateAIResponse = async () => {
+  const handleGenerateAIResponse = async (): Promise<void> => {
     const modalService = new ModalService()
 
     modalService.selectModal(model, apikey)
@@ -168,10 +171,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       setChatHistory((prev) => [...prev, res])
       setValue('')
       lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
-      inputFieldRef.current?.focus()
     }
 
     setIsResponseLoading(false)
+    setTimeout(() => {
+      inputFieldRef.current?.focus()
+    }, 0)
   }
 
   const loadInitialChatHistory = async () => {
@@ -237,10 +242,10 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       <div className="flex gap-2 items-center justify-between h-20 rounded-t-lg p-4">
         <div className="flex gap-2 items-center justify-start">
           <div className="bg-white rounded-full p-2">
-            <Bot color="#000" className="h-8 w-8" />
+            <Bot color="#000" className="h-6 w-6" />
           </div>
           <div>
-            <h3 className="font-bold text-xl">Need Help?</h3>
+            <h3 className="font-bold text-lg">Need Help?</h3>
             <h6 className="font-normal text-xs">Always online</h6>
           </div>
         </div>
@@ -248,7 +253,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
           onValueChange={(v: ValidModel) => heandelModel(v)}
           value={selectedModel}
         >
-          <SelectTrigger className="w-[40%] border-none shadow-none">
+          <SelectTrigger className="w-[180px] border-none shadow-none">
             <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
@@ -413,7 +418,12 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             required
             ref={inputFieldRef}
           />
-          <Button type="submit" size="icon" disabled={value.length === 0}>
+          <Button
+            type="submit"
+            className="bg-[#fafafa] rounded-lg text-black"
+            size="icon"
+            disabled={value.length === 0}
+          >
             <Send className="h-4 w-4" />
             <span className="sr-only">Send</span>
           </Button>

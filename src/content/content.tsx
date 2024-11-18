@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Bot, Copy, Send } from 'lucide-react'
+import { Bot, Copy, Dot, Send } from 'lucide-react'
 import { Highlight, themes } from 'prism-react-renderer'
 import { Input } from '@/components/ui/input'
 import { SYSTEM_PROMPT } from '@/constants/prompt'
@@ -78,6 +78,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
   }
 
   const problemName = getProblemName()
+  const inputFieldRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (lastMessageRef.current && !isPriviousMsgLoading) {
@@ -167,6 +168,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
       setChatHistory((prev) => [...prev, res])
       setValue('')
       lastMessageRef.current?.scrollIntoView({ behavior: 'smooth' })
+      inputFieldRef.current?.focus()
     }
 
     setIsResponseLoading(false)
@@ -232,16 +234,22 @@ const ChatBox: React.FC<ChatBoxProps> = ({
 
   return (
     <Card className="mb-2 ">
-      <div className="flex items-center jusfitfy-center bg-[#333333] p-1">
-        <h3 className="text-white text- p-2 capitalize flex-1 ">
-          {problemName.replace(/-/g, ' ')}
-        </h3>
+      <div className="flex gap-2 items-center justify-between h-20 rounded-t-lg p-4">
+        <div className="flex gap-2 items-center justify-start">
+          <div className="bg-white rounded-full p-2">
+            <Bot color="#000" className="h-8 w-8" />
+          </div>
+          <div>
+            <h3 className="font-bold text-xl">Need Help?</h3>
+            <h6 className="font-normal text-xs">Always online</h6>
+          </div>
+        </div>
         <Select
           onValueChange={(v: ValidModel) => heandelModel(v)}
           value={selectedModel}
         >
-          <SelectTrigger className="w-[50%] border-white visible:focus-ring-0 visible:focus-ring-offset-0">
-            <SelectValue placeholder="Select a model" />
+          <SelectTrigger className="w-[40%] border-none shadow-none">
+            <SelectValue placeholder="Select model" />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
@@ -269,7 +277,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
                   className="text-sm p-1 m-x-auto bg-transpernent text-white hover:bg-transpernent"
                   onClick={loadMoreMessages}
                 >
-                  Load Privious Messages
+                  Load Previous Messages
                 </Button>
               </div>
             )}
@@ -403,6 +411,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             onChange={(event) => setValue(event.target.value)}
             disabled={isResponseLoading}
             required
+            ref={inputFieldRef}
           />
           <Button type="submit" size="icon" disabled={value.length === 0}>
             <Send className="h-4 w-4" />
@@ -422,7 +431,26 @@ const ContentPage: React.FC = () => {
 
   const [modal, setModal] = React.useState<ValidModel | null | undefined>(null)
   const [apiKey, setApiKey] = React.useState<string | null | undefined>(null)
+  const [selectedModel, setSelectedModel] = React.useState<ValidModel>()
 
+  const ref = useRef<HTMLDivElement>(null)
+
+  const handleDocumentClick = (e: MouseEvent) => {
+    if (
+      ref.current &&
+      e.target instanceof Node &&
+      !ref.current.contains(e.target)
+    ) {
+      // if (chatboxExpanded) setChatboxExpanded(false)
+    }
+  }
+
+  React.useEffect(() => {
+    document.addEventListener('click', handleDocumentClick)
+    return () => {
+      document.removeEventListener('click', handleDocumentClick)
+    }
+  }, [])
   ;(async () => {
     const { getKeyModel, selectModel } = useChromeStorage()
     const { model, apiKey } = await getKeyModel(await selectModel())
@@ -430,8 +458,6 @@ const ContentPage: React.FC = () => {
     setModal(model)
     setApiKey(apiKey)
   })()
-
-  const [selectedModel, setSelectedModel] = React.useState<ValidModel>()
 
   const heandelModel = (v: ValidModel) => {
     if (v) {
@@ -455,6 +481,7 @@ const ContentPage: React.FC = () => {
 
   return (
     <div
+      ref={ref}
       className="dark z-50"
       style={{
         position: 'fixed',

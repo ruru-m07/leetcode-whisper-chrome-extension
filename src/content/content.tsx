@@ -1,6 +1,13 @@
 import React, { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Bot, Copy, EllipsisVertical, Eraser, Send } from 'lucide-react'
+import {
+  Bot,
+  Copy,
+  EllipsisVertical,
+  Eraser,
+  Send,
+  Settings,
+} from 'lucide-react'
 import { Highlight, themes } from 'prism-react-renderer'
 import { Input } from '@/components/ui/input'
 import { SYSTEM_PROMPT } from '@/constants/prompt'
@@ -280,13 +287,19 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
-            <DropdownMenuLabel>
-              {VALID_MODELS.find((model) => model.name === selectedModel)?.display}
+            <DropdownMenuLabel className='flex items-center'>
+              <Settings size={16} strokeWidth={1.5} className='mr-2' />{' '}
+              {
+                VALID_MODELS.find((model) => model.name === selectedModel)
+                  ?.display
+              }
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Change Model</DropdownMenuSubTrigger>
+                <DropdownMenuSubTrigger>
+                  <Bot size={16} strokeWidth={1.5} /> Change Model
+                </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent>
                     <DropdownMenuRadioGroup
@@ -315,7 +328,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({
               }
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '')}
             >
-              Clear Chat
+              <Eraser size={14} strokeWidth={1.5} /> Clear Chat
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

@@ -287,8 +287,8 @@ const ChatBox: React.FC<ChatBoxProps> = ({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
-            <DropdownMenuLabel className='flex items-center'>
-              <Settings size={16} strokeWidth={1.5} className='mr-2' />{' '}
+            <DropdownMenuLabel className="flex items-center">
+              <Settings size={16} strokeWidth={1.5} className="mr-2" />{' '}
               {
                 VALID_MODELS.find((model) => model.name === selectedModel)
                   ?.display

@@ -4,11 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "dev": "concurrently \"watch:tailwind\" \"watch:cleaner\" \"vite\"",
+    "build": "pnpm run build:tailwind && vite build",
+    "build:tailwind": "npx tailwindcss -i ./src/index.css -o ./out.css && node ./css-cleaner.js",
     "lint": "eslint .",
     "preview": "vite preview",
-    "prettier": "prettier . --write"
+    "prettier": "prettier . --write",
+    "watch:tailwind": "npx tailwindcss -i ./src/index.css -o ./out.css --watch",
+    "watch:cleaner": "node ./css-cleaner.js --watch"
   },
   "dependencies": {
     "@ai-sdk/google": "^0.0.55",
@@ -23,6 +26,7 @@
     "@radix-ui/react-slot": "^1.1.0",
     "ai": "^3.4.33",
     "autoprefixer": "^10.4.20",
+    "chokidar": "^4.0.1",
     "chrome-ai": "^1.11.1",
     "chrome-types": "^0.1.319",
     "class-variance-authority": "^0.7.0",
@@ -44,6 +48,7 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "concurrently": "^9.1.0",
     "eslint": "^9.13.0",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",

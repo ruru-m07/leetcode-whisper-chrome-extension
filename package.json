@@ -4,14 +4,14 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"watch:tailwind\" \"watch:cleaner\" \"vite\"",
+    "dev": "node scripts/run.js",
     "build": "pnpm run build:tailwind && vite build",
-    "build:tailwind": "npx tailwindcss -i ./src/index.css -o ./out.css && node ./css-cleaner.js",
+    "build:tailwind": "npx tailwindcss -i ./src/index.css -o ./out.css && node ./scripts/css-cleaner.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "prettier": "prettier . --write",
     "watch:tailwind": "npx tailwindcss -i ./src/index.css -o ./out.css --watch",
-    "watch:cleaner": "node ./css-cleaner.js --watch"
+    "watch:cleaner": "node ./scripts/css-cleaner.js --watch"
   },
   "dependencies": {
     "@ai-sdk/google": "^0.0.55",

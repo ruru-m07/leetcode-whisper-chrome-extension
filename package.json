@@ -7,6 +7,7 @@
     "dev": "node scripts/run.js",
     "build": "pnpm run build:tailwind && vite build",
     "build:tailwind": "npx tailwindcss -i ./src/index.css -o ./out.css && node ./scripts/css-cleaner.js",
+    "clean": "node ./scripts/clean.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "prettier": "prettier . --write",

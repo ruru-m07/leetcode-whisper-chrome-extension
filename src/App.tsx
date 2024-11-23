@@ -105,8 +105,8 @@ const Popup: React.FC = () => {
             onSubmit={(e) => updatestorage(e)}
             className="mt-10 flex flex-col gap-2 w-full"
           >
-            <div className="space-y-2">
-              <label htmlFor="text" className="text-xs text-muted-foreground">
+            <div>
+              <label htmlFor="text" className="text-xs text-muted-foreground mb-2">
                 select a model
               </label>
               <Select
@@ -132,8 +132,8 @@ const Popup: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <label htmlFor="text" className="text-xs text-muted-foreground">
+            <div>
+              <label htmlFor="text" className="text-xs text-muted-foreground mb-2">
                 API Key {model ? `for ${model}` : ''}
               </label>
               <HideApiKey

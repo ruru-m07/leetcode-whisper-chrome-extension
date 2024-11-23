@@ -5,7 +5,7 @@ try {
     stdio: 'inherit',
   })
   execSync('node ./scripts/css-cleaner.js', { stdio: 'inherit' })
-  execSync('npx concurrently "watch:tailwind" "watch:cleaner" "vite"', {
+  execSync('npx concurrently "pnpm run watch:tailwind" "pnpm run watch:cleaner" "vite"', {
     stdio: 'inherit',
   })
 } catch (error) {
